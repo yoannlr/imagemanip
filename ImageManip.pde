@@ -3,6 +3,7 @@ boolean mouseDown = false;
 int saveFile = 0;
 int[] pencilColor = {0, 0, 0};
 int pencilWeight = 1;
+final int maxPencilWeight = 100;
 
 color[][] get2DImage() {
   color[][] twoD = new color[width][height];
@@ -72,7 +73,7 @@ void slenderMooode() {
 }
 
 void setup() {
-  img = loadImage("shiba.jpg");
+  img = loadImage("shiba.jpg");    //alors evidemment (bonjour a tous) !
   size(480, 670);
   frameRate(30);
   background(0, 0, 0);
@@ -86,11 +87,12 @@ void drawMenu(int x, int y) {
   fill(pencilColor[0], pencilColor[1], pencilColor[2]);
   rect(5, 645, 20, 20);
   text(String.valueOf(pencilWeight), 30, 655);
+  stroke(0, 0, 0);
+  text("H Flip   V Flip   Revert   Black&White   Save   Reload", 60, 655);
 }
 
 void draw() {
-  //On dessine YAY !
-  //On aurait pu le faire avec un tableau, mais processing a toujours une fonction magique pour t'empecher de coder !
+  //On dessine YAY ! (en fait c'etait simple (basique (mdrrrrrr c pa drol lol)))
   stroke(pencilColor[0], pencilColor[1], pencilColor[2]);
   strokeWeight(pencilWeight);
   if(mouseDown) line(pmouseX, pmouseY, mouseX, mouseY);
@@ -104,6 +106,18 @@ void mousePressed() {
 
 void mouseReleased() {
   mouseDown = false;
+}
+
+void mouseClicked() {
+  if(mouseY >= 640) {
+    //println(mouseX);
+    if(mouseX >= 60 && mouseX <= 100) stupeFlip(0);
+    else if(mouseX >= 101 && mouseX <= 145) stupeFlip(1);
+    else if(mouseX >= 146 && mouseX <= 200) slenderMooode();
+    else if(mouseX >= 201 && mouseX <= 285) darkMooode();
+    else if(mouseX >= 286 && mouseX <= 330) saveImage();
+    else if(mouseX >= 331 && mouseX <= 400) image(img, 0, 0);
+  }
 }
 
 void saveImage() {
@@ -125,6 +139,6 @@ void keyPressed() {
   if(key == 'g') stupeFlip(1);
   if(key == 's') saveImage();
   if(key == 'c') setNewPenColor();
-  if(key == 'p') if(pencilWeight + 1 < 100) pencilWeight++;
+  if(key == 'p') if(pencilWeight + 1 < maxPencilWeight) pencilWeight++;
   if(key == 'm') if(pencilWeight - 1 > 0) pencilWeight--;
 }
