@@ -12,7 +12,7 @@ color[][] get2DImage() {
   
   for(int y = 0; y < height; y++) {
     for(int x = 0; x < width; x++) {
-      twoD[y][x] = pixels[waf];
+      twoD[x][y] = pixels[waf];
       waf++;
     }
   }
@@ -26,11 +26,57 @@ void upload2D(color[][] twoD) {
   loadPixels();  
   for(int y = 0; y < height; y++) {
     for(int x = 0; x < width; x++) {
-      pixels[wuf] = twoD[y][x];
+      pixels[wuf] = twoD[x][y];
       wuf++;
     }
   }
   
+  updatePixels();
+}
+
+float colorMoy(color input) {
+  return (red(input) + green(input) + blue(input)) / 3;
+}
+
+void blur(int radius) {
+  color[][] twoDImg = get2DImage();
+  
+  for(int x = radius; x < img.width - radius; x+= radius * 2 + 1) {
+    for(int y = radius; y < img.height - radius; y+= radius * 2 + 1) {
+      //x et y == coordonnes du centre du blur
+      //print(x + " " + y + ", ");
+      
+      float moyR = red(twoDImg[x][y]);
+      float moyG = green(twoDImg[x][y]);
+      float moyB = blue(twoDImg[x][y]);
+      
+      for(int i = x - radius; i <= x + radius; i++) {
+        for(int j = y - radius; j <= y + radius; j++) {
+          //i et j == coordonnes de tous les pixels dans le radius
+          //print(i + " " + j + ", ");
+          moyR = (moyR + red(twoDImg[i][j])) / 2;
+          moyG = (moyG + green(twoDImg[i][j])) / 2;
+          moyB = (moyB + blue(twoDImg[i][j])) / 2;
+        }
+      }
+
+      for(int i = x - radius; i <= x + radius; i++) {
+        for(int j = y - radius; j <= y + radius; j++) {
+          twoDImg[i][j] = color(moyR, moyG, moyB);
+        }
+      }
+    }
+  }
+  
+  upload2D(twoDImg);
+}
+
+void binarize() {
+  loadPixels();
+  for(int i = 0; i < pixels.length; i++) {
+    if(colorMoy(pixels[i]) > 127) pixels[i] = color(255f, 255f, 255f);
+    else pixels[i] = color(0f, 0f, 0f);
+  }
   updatePixels();
 }
 
@@ -55,10 +101,7 @@ void stupeFlip(int mode) {
 void darkMooode() {
   loadPixels();
   for(int i = 0; i < pixels.length; i++) {
-    float r = red(pixels[i]);
-    float g = green(pixels[i]);
-    float b = blue(pixels[i]);
-    float newColor = (r + g + b) / 3;
+    float newColor = colorMoy(pixels[i]);
     pixels[i] = color(newColor, newColor, newColor);
   }
   updatePixels();
@@ -138,6 +181,8 @@ void keyPressed() {
   if(key == 'f') stupeFlip(0);
   if(key == 'g') stupeFlip(1);
   if(key == 's') saveImage();
+  if(key == 'b') binarize();
+  if(key == 'n') blur(2);
   if(key == 'c') setNewPenColor();
   if(key == 'p') if(pencilWeight + 1 < maxPencilWeight) pencilWeight++;
   if(key == 'm') if(pencilWeight - 1 > 0) pencilWeight--;
