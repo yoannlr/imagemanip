@@ -1,4 +1,6 @@
 PImage img;
+PImage ui;
+
 boolean mouseDown = false;
 int saveFile = 0;
 int[] pencilColor = {0, 0, 0};
@@ -43,8 +45,7 @@ void blur(int radius) {
   
   for(int x = radius; x < img.width - radius; x+= radius * 2 + 1) {
     for(int y = radius; y < img.height - radius; y+= radius * 2 + 1) {
-      //x et y == coordonnes du centre du blur
-      //print(x + " " + y + ", ");
+      //x et y sont les coordonnees du centre d'application du flou
       
       float moyR = red(twoDImg[x][y]);
       float moyG = green(twoDImg[x][y]);
@@ -52,8 +53,8 @@ void blur(int radius) {
       
       for(int i = x - radius; i <= x + radius; i++) {
         for(int j = y - radius; j <= y + radius; j++) {
-          //i et j == coordonnes de tous les pixels dans le radius
-          //print(i + " " + j + ", ");
+          //i et j sont les coordonnees de tous les points appartenant au radius du flou
+          //mise a jour des composantes r g b du flou
           moyR = (moyR + red(twoDImg[i][j])) / 2;
           moyG = (moyG + green(twoDImg[i][j])) / 2;
           moyB = (moyB + blue(twoDImg[i][j])) / 2;
@@ -62,6 +63,7 @@ void blur(int radius) {
 
       for(int i = x - radius; i <= x + radius; i++) {
         for(int j = y - radius; j <= y + radius; j++) {
+          //on applique la couleur que l'on vient de calculer a tous les pixels de la zone
           twoDImg[i][j] = color(moyR, moyG, moyB);
         }
       }
@@ -80,14 +82,16 @@ void binarize() {
   updatePixels();
 }
 
-void stupeFlip(int mode) {
+void flip(int mode) {
   loadPixels();
   color[] newPixels = new color[img.width * img.height];
+
+  //on aurait pu le faire avec des tableaux en 2 dimensions, mais il est tout aussi simple de calculer les coordonnees sur le tableau unidimensionnel
 
   for(int y = 0; y < img.height; y++) {
     for(int x = 0; x < width; x++) {
       if(mode == 0) newPixels[y * width + x] = pixels[y * width + (width - x)];    //flip horizontal
-      if(mode == 1) newPixels[y * width + x] = pixels[(img.height - y) * width + x];  //flip vertical
+      if(mode == 1) newPixels[y * width + x] = pixels[(img.height - y - 1) * width + x];  //flip vertical
     }
   }
   
@@ -98,7 +102,7 @@ void stupeFlip(int mode) {
   updatePixels();
 }
 
-void darkMooode() {
+void blackAndWhite() {
   loadPixels();
   for(int i = 0; i < pixels.length; i++) {
     float newColor = colorMoy(pixels[i]);
@@ -107,7 +111,7 @@ void darkMooode() {
   updatePixels();
 }
 
-void slenderMooode() {
+void reverseColors() {
   loadPixels();
   for(int i = 0; i < pixels.length; i++) {
     pixels[i]=color(255-red(pixels[i]), 255-green(pixels[i]), 255-blue(pixels[i]));
@@ -116,8 +120,9 @@ void slenderMooode() {
 }
 
 void setup() {
-  img = loadImage("shiba.jpg");    //alors evidemment (bonjour a tous) !
-  size(480, 670);
+  img = loadImage("shiba.jpg");    //les shibas, c'est mignon :3
+  ui = loadImage("boutons.png");   //boutons de l'inteface
+  size(480, 680);
   frameRate(30);
   background(0, 0, 0);
   image(img, 0, 0);
@@ -125,17 +130,15 @@ void setup() {
 
 void drawMenu(int x, int y) {
   strokeWeight(0);
-  fill(255, 255, 255);
-  rect(x, y, width, 30);
+  image(ui, x, y);
   fill(pencilColor[0], pencilColor[1], pencilColor[2]);
-  rect(5, 645, 20, 20);
-  text(String.valueOf(pencilWeight), 30, 655);
-  stroke(0, 0, 0);
-  text("H Flip   V Flip   Revert   Black&White   Save   Reload", 60, 655);
+  rect(x + 2, y + 2, 36, 36);
+  fill(255, 255, 255);
+  text(String.valueOf(pencilWeight), x + 10, y + 20);
 }
 
 void draw() {
-  //On dessine YAY ! (en fait c'etait simple (basique (mdrrrrrr c pa drol lol)))
+  //On dessine YAY ! (on cree une ligne entre la derniere position de la souris et sa position actuelle)
   stroke(pencilColor[0], pencilColor[1], pencilColor[2]);
   strokeWeight(pencilWeight);
   if(mouseDown) line(pmouseX, pmouseY, mouseX, mouseY);
@@ -153,13 +156,20 @@ void mouseReleased() {
 
 void mouseClicked() {
   if(mouseY >= 640) {
-    //println(mouseX);
-    if(mouseX >= 60 && mouseX <= 100) stupeFlip(0);
-    else if(mouseX >= 101 && mouseX <= 145) stupeFlip(1);
-    else if(mouseX >= 146 && mouseX <= 200) slenderMooode();
-    else if(mouseX >= 201 && mouseX <= 285) darkMooode();
-    else if(mouseX >= 286 && mouseX <= 330) saveImage();
-    else if(mouseX >= 331 && mouseX <= 400) image(img, 0, 0);
+    if(mouseX >= 40 && mouseX <= 79) {
+      if(mouseY < 660 && pencilWeight + 1 < maxPencilWeight) pencilWeight++;
+      else if(mouseY >= 660 && pencilWeight - 1 > 1) pencilWeight--;
+    }
+    else if(mouseX >= 80 && mouseX <= 119) setNewPenColor();
+    else if(mouseX >= 120 && mouseX <= 159) binarize();
+    else if(mouseX >= 160 && mouseX <= 199) blackAndWhite();
+    else if(mouseX >= 200 && mouseX <= 239) reverseColors();
+    else if(mouseX >= 240 && mouseX <= 279) flip(0);
+    else if(mouseX >= 280 && mouseX <= 319) flip(1);
+    else if(mouseX >= 320 && mouseX <= 359) blur(2);
+    else if(mouseX >= 360 && mouseX <= 399) saveImage();
+    else if(mouseX >= 400 && mouseX <= 439) image(img, 0, 0);
+    else if(mouseX >= 440 && mouseX <= 480) exit();
   }
 }
 
@@ -176,14 +186,14 @@ void setNewPenColor() {
 
 void keyPressed() {
   if(key == 'r') image(img, 0, 0);
-  if(key == 'd') darkMooode();
-  if(key == 'i') slenderMooode();
-  if(key == 'f') stupeFlip(0);
-  if(key == 'g') stupeFlip(1);
+  if(key == 'd') blackAndWhite();
+  if(key == 'i') reverseColors();
+  if(key == 'f') flip(0);
+  if(key == 'g') flip(1);
   if(key == 's') saveImage();
   if(key == 'b') binarize();
   if(key == 'n') blur(2);
   if(key == 'c') setNewPenColor();
   if(key == 'p') if(pencilWeight + 1 < maxPencilWeight) pencilWeight++;
-  if(key == 'm') if(pencilWeight - 1 > 0) pencilWeight--;
+  if(key == 'm') if(pencilWeight - 1 > 1) pencilWeight--;
 }
